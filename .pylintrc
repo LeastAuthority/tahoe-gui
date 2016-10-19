@@ -1,0 +1,9 @@
+[MESSAGES CONTROL]
+disable=
+    no-name-in-module,
+    no-member,
+    invalid-name,
+    missing-docstring,
+    wrong-import-position,
+    too-few-public-methods,
+    fixme
