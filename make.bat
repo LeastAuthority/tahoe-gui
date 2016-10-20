@@ -1,4 +1,4 @@
-::
+
 :: This script assumes that the following dependencies are installed:
 ::
 ::      Python 2.7: https://www.python.org/
@@ -12,6 +12,7 @@
 if "%1"=="test" call :test
 if "%1"=="pytest" call :pytest
 if "%1"=="frozen-tahoe" call :frozen-tahoe
+if "%1"=="exe" call :exe
 if "%1"=="all" call :all
 if "%1"=="" call :all
 goto :eof
