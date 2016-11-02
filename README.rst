@@ -36,3 +36,16 @@ Windows (64-bit):
 
 .. _Tahoe-GUI.dmg: https://buildbot.gridsync.io/packages/Tahoe-GUI.dmg
 .. _Tahoe-GUI-win64.zip: https://buildbot.gridsync.io/packages/Tahoe-GUI-win64.zip
+
+Debian:
+
+To install from inside a clone of this repository on Debian (tested on
+"jessie"):
+
+1. `sudo apt-get install virtualenv python3 python-pyqt5`
+2. `virtualenv --python=python3 --system-site-packages venv`
+3. `./venv/bin/pip install --upgrade pip setuptools`
+4. `./venv/bin/pip install --editable .`
+
+The "upgrade" step is because the `pip` that ships with the Debian
+virtualenv package is very old.
