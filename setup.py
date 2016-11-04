@@ -75,5 +75,5 @@ setup(
     entry_points={
         'console_scripts': ['tahoe-gui=tahoe_gui.cli:main'],
     },
-    install_requires=['PyQt5'],
+    install_requires=['PyQt5', 'qt5reactor'],
 )

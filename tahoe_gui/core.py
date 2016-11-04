@@ -6,6 +6,13 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 app = QApplication(sys.argv)
+# qt5reactor must be installed after initializing QApplication but
+# before running importing/importing any other Twisted code.
+# See https://github.com/sunu/qt5reactor/blob/master/README.rst
+import qt5reactor
+qt5reactor.install()
+
+from twisted.internet import reactor
 
 from tahoe_gui.systray import SystemTrayIcon
 
@@ -43,4 +50,4 @@ class Core(object):
         self.tray = SystemTrayIcon(self)
         self.tray.show()
         self.first_run()
-        app.exec_()
+        reactor.run()
