@@ -64,12 +64,15 @@ def wormhole_receive(code, use_tor=None):
 class LineEdit(QLineEdit):
     def keyPressEvent(self, event):
         key = event.key()
+        text = self.text()
         if key == Qt.Key_Space:
-            if not self.text().endswith('-'):
-                self.setText(self.text() + '-')
-        elif key == Qt.Key_Minus:
-            if not self.text().endswith('-'):
-                return QLineEdit.keyPressEvent(self, event)
+            if text and not text.endswith('-'):
+                self.setText(text + '-')
+        elif key == Qt.Key_Tab:
+            if text and len(text.split('-')) < 3 and not text.endswith('-'):
+                self.setText(text + '-')
+            else:
+                self.setText(text)
         else:
             return QLineEdit.keyPressEvent(self, event)
 
