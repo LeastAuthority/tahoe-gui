@@ -57,7 +57,10 @@ if exist .\dist\Tahoe-LAFS.zip (
 call py -3.5 -m pip install --upgrade pip virtualenv
 call py -3.5 -m virtualenv --clear .\build\venv-gui
 call .\build\venv-gui\Scripts\activate
-call pip install pyqt5==5.6 . git+https://github.com/pyinstaller/pyinstaller.git
+call pip install pyqt5==5.6
+call pip install git+https://github.com/crwood/qt5reactor.git
+call pip install . 
+call pip install git+https://github.com/pyinstaller/pyinstaller.git
 call set PYTHONHASHSEED=1
 call pyinstaller misc\tahoe-gui.spec
 call move dist\Tahoe-LAFS dist\Tahoe-GUI\Tahoe-LAFS
