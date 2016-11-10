@@ -2,6 +2,7 @@
 disable=
     no-name-in-module,
     no-member,
+    no-self-use,
     invalid-name,
     missing-docstring,
     wrong-import-position,

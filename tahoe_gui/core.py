@@ -14,6 +14,7 @@ qt5reactor.install()
 
 from twisted.internet import reactor
 
+from tahoe_gui.invite import InviteForm
 from tahoe_gui.systray import SystemTrayIcon
 
 
@@ -24,12 +25,6 @@ class Core(object):
 
     def notify(self, title, message):
         self.tray.showMessage(title, message, msecs=5000)
-
-    def first_run(self):  # pylint: disable=no-self-use
-        from tahoe_gui.wizard import Wizard
-        w = Wizard()
-        w.exec_()
-        logging.debug("Setup wizard finished")
 
     def start(self):
         if self.args.debug:
@@ -49,5 +44,8 @@ class Core(object):
 
         self.tray = SystemTrayIcon(self)
         self.tray.show()
-        self.first_run()
+        inv = InviteForm()
+        inv.show()
+        inv.raise_()
+
         reactor.run()
