@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import os
 import sys
 
@@ -14,38 +13,49 @@ qt5reactor.install()
 
 from twisted.internet import reactor
 
+from tahoe_gui.config import config_dir
 from tahoe_gui.invite import InviteForm
 from tahoe_gui.systray import SystemTrayIcon
+from tahoe_gui.tahoe import Tahoe
 
 
 class Core(object):
     def __init__(self, args):
         self.args = args
         self.tray = None
+        self.gateways = []
 
-    def notify(self, title, message):
-        self.tray.showMessage(title, message, msecs=5000)
+    def get_nodedirs(self):
+        nodedirs = []
+        for file in os.listdir(config_dir):
+            filepath = os.path.join(config_dir, file)
+            if os.path.isdir(filepath):
+                nodedirs.append(filepath)
+        return nodedirs
+
+    def stop(self):
+        for nodedir in self.get_nodedirs():
+            gateway = Tahoe(nodedir)
+            gateway.command(['stop'])
 
     def start(self):
-        if self.args.debug:
-            logging.basicConfig(
-                format='%(asctime)s %(funcName)s %(message)s',
-                level=logging.DEBUG,
-                stream=sys.stdout)
+        try:
+            os.makedirs(config_dir)
+        except OSError:
+            pass
+        nodedirs = self.get_nodedirs()
+        if nodedirs:
+            for nodedir in nodedirs:
+                gateway = Tahoe(nodedir)
+                gateway.start()
+                self.gateways.append(gateway)
         else:
-            logging.basicConfig(
-                format='%(asctime)s %(funcName)s %(message)s',
-                level=logging.INFO,
-                stream=sys.stdout)
-        logging.info("Core starting with args: %s", self.args)
-        logging.debug("$PATH is: %s", os.getenv('PATH'))
-
-        # XXX TODO: Load config, check if first run, launch tahoe daemons, etc.
+            inv = InviteForm()
+            inv.show()
+            inv.raise_()
 
         self.tray = SystemTrayIcon(self)
         self.tray.show()
-        inv = InviteForm()
-        inv.show()
-        inv.raise_()
 
+        reactor.addSystemEventTrigger('before', 'shutdown', self.stop)
         reactor.run()
