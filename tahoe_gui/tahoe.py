@@ -2,6 +2,7 @@
 
 import configparser
 import os
+import shutil
 import sys
 
 from twisted.internet import reactor
@@ -67,7 +68,7 @@ class Tahoe():
     @inlineCallbacks
     def command(self, args, callback_trigger=None):
         protocol = CommandProtocol(self, callback_trigger)
-        exe = 'tahoe' + ('.exe' if sys.platform == 'win32' else '')
+        exe = shutil.which('tahoe')
         args = [exe] + (['-d', self.nodedir] if self.nodedir else []) + args
         env = os.environ
         env['PYTHONUNBUFFERED'] = '1'
