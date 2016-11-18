@@ -65,15 +65,38 @@ class Tahoe():
         # TODO: Connect to Core via Qt signals/slots?
         print(">>> " + msg)
 
+    def _win32_popen(self, args, env, callback_trigger=None):
+        # This is a workaround to prevent Command Prompt windows from opening
+        # when spawning tahoe processes from the GUI on Windows, as Twisted's
+        # reactor.spawnProcess() API does not allow Windows creation flags to
+        # be passed to subprocesses. By passing 0x08000000 (CREATE_NO_WINDOW),
+        # the opening of the Command Prompt window will be surpressed while
+        # still allowing access to stdout/stderr. See:
+        # https://twistedmatrix.com/pipermail/twisted-python/2007-February/014733.html
+        import subprocess
+        proc = subprocess.Popen(
+            args, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            universal_newlines=True, creationflags=0x08000000)
+        for line in iter(proc.stdout.readline, ''):
+            self.out_received(line.rstrip())
+            if callback_trigger and callback_trigger in line.rstrip():
+                return
+        proc.poll()
+        return proc.returncode
+
     @inlineCallbacks
     def command(self, args, callback_trigger=None):
-        protocol = CommandProtocol(self, callback_trigger)
         exe = shutil.which('tahoe')
         args = [exe] + (['-d', self.nodedir] if self.nodedir else []) + args
         env = os.environ
         env['PYTHONUNBUFFERED'] = '1'
-        reactor.spawnProcess(protocol, exe, args=args, env=env)
-        yield protocol.done
+        if sys.platform == 'win32' and getattr(sys, 'frozen', False):
+            from twisted.internet.threads import deferToThread
+            yield deferToThread(self._win32_popen, args, env, callback_trigger)
+        else:
+            protocol = CommandProtocol(self, callback_trigger)
+            reactor.spawnProcess(protocol, exe, args=args, env=env)
+            yield protocol.done
 
     @inlineCallbacks
     def start_monitor(self):
