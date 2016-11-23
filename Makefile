@@ -99,7 +99,9 @@ frozen-tahoe:
 	# Requires libssl-dev libffi-dev
 	mkdir -p dist
 	rm -rf build/tahoe-lafs
-	git clone https://github.com/tahoe-lafs/tahoe-lafs.git build/tahoe-lafs
+	#git clone https://github.com/tahoe-lafs/tahoe-lafs.git build/tahoe-lafs
+	git clone -b 1432.osx-watchdog-stable.9 \
+        https://github.com/david415/tahoe-lafs.git build/tahoe-lafs
 	virtualenv --clear --python=python2 build/venv-tahoe
 	source build/venv-tahoe/bin/activate && \
 	cp misc/tahoe.spec build/tahoe-lafs && \
