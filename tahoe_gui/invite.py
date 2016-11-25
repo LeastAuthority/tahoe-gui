@@ -19,7 +19,8 @@ from tahoe_gui.resource import resource
 from tahoe_gui.tahoe import Tahoe
 
 appid = u"lothar.com/wormhole/text-or-file-xfer"
-relay = u"ws://wormhole-relay.lothar.com:4000/v1"
+#relay = u"ws://wormhole-relay.lothar.com:4000/v1"
+relay = u"ws://leastauthority.com:4000/v1"
 
 
 wordlist = []
