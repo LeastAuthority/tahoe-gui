@@ -145,6 +145,7 @@ class InviteForm(QWidget):
         self.lineedit.setPlaceholderText("Enter invite code")
         self.lineedit.returnPressed.connect(self.return_pressed)
         self.progressbar = QProgressBar()
+        self.progressbar.setMaximum(8)
         self.progressbar.setTextVisible(False)
         self.progressbar.hide()
         middle_layout.addItem(HorizontalSpacer())
@@ -160,7 +161,6 @@ class InviteForm(QWidget):
         self.checkbox.setStyleSheet("color: grey")
         self.checkbox.setFocusPolicy(Qt.NoFocus)
         self.label = QLabel()
-        self.label.setStyleSheet("color: grey")
         self.label.hide()
         bottom_layout.addItem(HorizontalSpacer())
         bottom_layout.addWidget(self.checkbox)
@@ -173,8 +173,8 @@ class InviteForm(QWidget):
         layout.addLayout(bottom_layout)
         layout.addItem(VerticalSpacer())
 
-    def update_progress(self, percentage, message):
-        self.progressbar.setValue(percentage)
+    def update_progress(self, step, message):
+        self.progressbar.setValue(step)
         self.progressbar.show()
         self.label.setStyleSheet("color: grey")
         self.label.setText(message)
@@ -195,11 +195,11 @@ class InviteForm(QWidget):
             os.makedirs(folder)
         except OSError:
             pass
-        self.update_progress(12.5, 'Opening wormhole...')
+        self.update_progress(1, 'Opening wormhole...')
         data = yield wormhole_receive(code)
         settings = json.loads(data)
 
-        self.update_progress(25, 'Creating gateway...')
+        self.update_progress(2, 'Creating gateway...')
         nodeid = binascii.b2a_hex(os.urandom(32)).decode('utf-8')
         tahoe = Tahoe(os.path.join(config_dir, nodeid))
         args = ['create-client', '--webport=tcp:0:interface=127.0.0.1']
@@ -210,28 +210,28 @@ class InviteForm(QWidget):
                 args.extend(['--{}'.format(option), settings[option]])
         yield tahoe.command(args)
 
-        self.update_progress(37.5, 'Configuring gateway...')
+        self.update_progress(3, 'Configuring gateway...')
         for option in ('needed', 'happy', 'total'):
             if option in settings:
                 tahoe.config_set('client', 'shares.{}'.format(option),
                                  settings[option])
 
-        self.update_progress(50, 'Starting gateway...')
+        self.update_progress(4, 'Starting gateway...')
         yield tahoe.start()
 
-        self.update_progress(62.5, 'Connecting to grid...')
+        self.update_progress(5, 'Connecting to grid...')
         # TODO: Replace with call to "readiness" API?
         # https://tahoe-lafs.org/trac/tahoe-lafs/ticket/2844
         yield sleep(2)
 
-        self.update_progress(75, 'Creating magic-folder...')
+        self.update_progress(6, 'Creating magic-folder...')
         yield tahoe.command(['magic-folder', 'create', 'magic:', 'admin',
                              folder])
 
-        self.update_progress(87.5, 'Reloading...')
+        self.update_progress(7, 'Reloading...')
         yield tahoe.start()
 
-        self.update_progress(100, 'Done!')
+        self.update_progress(8, 'Done!')
         yield sleep(1)
         # TODO: Open local folder with file manager instead?
         yield tahoe.command(['webopen'])
