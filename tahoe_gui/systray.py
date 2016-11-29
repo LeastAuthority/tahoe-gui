@@ -5,6 +5,7 @@ import sys
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QMenu, QSystemTrayIcon
+from twisted.internet import reactor
 
 from tahoe_gui.invite import InviteForm
 from tahoe_gui.resource import resource
@@ -29,7 +30,7 @@ class RightClickMenu(QMenu):
 
         quit_action = QAction(QIcon(""), '&Quit Tahoe-LAFS', self)
         quit_action.setShortcut('Ctrl+Q')
-        quit_action.triggered.connect(sys.exit)
+        quit_action.triggered.connect(reactor.stop)
         self.addAction(quit_action)
 
     def show_invite_form(self):
