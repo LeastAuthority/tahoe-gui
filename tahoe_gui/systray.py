@@ -3,7 +3,6 @@
 import logging
 import os
 import shutil
-import sys
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAction, QMenu, QMessageBox, QSystemTrayIcon
