@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import binascii
 import json
 import os
 
@@ -200,8 +199,7 @@ class InviteForm(QWidget):
         settings = json.loads(data)
 
         self.update_progress(2, 'Creating gateway...')
-        nodeid = binascii.b2a_hex(os.urandom(32)).decode('utf-8')
-        tahoe = Tahoe(os.path.join(config_dir, nodeid))
+        tahoe = Tahoe(os.path.join(config_dir, 'default'))
         args = ['create-client', '--webport=tcp:0:interface=127.0.0.1']
         for option in ('nickname', 'introducer'):
             # TODO: Add 'needed', 'happy', 'total' pending tahoe-lafs PR #376
