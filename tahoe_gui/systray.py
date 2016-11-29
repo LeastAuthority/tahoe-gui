@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
+import shutil
 import sys
 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QMenu, QSystemTrayIcon
+from PyQt5.QtWidgets import QAction, QMenu, QMessageBox, QSystemTrayIcon
 from twisted.internet import reactor
 
+from tahoe_gui.config import config_dir
 from tahoe_gui.invite import InviteForm
 from tahoe_gui.resource import resource
 
@@ -34,6 +37,16 @@ class RightClickMenu(QMenu):
         self.addAction(quit_action)
 
     def show_invite_form(self):
+        nodedir = os.path.join(config_dir, 'default')
+        if os.path.isdir(nodedir):
+            reply = QMessageBox.question(
+                self, "Tahoe-LAFS already configured",
+                "Tahoe-LAFS is already configured on this computer. "
+                "Do you want to overwrite your existing configuration?")
+            if reply == QMessageBox.Yes:
+                shutil.rmtree(nodedir, ignore_errors=True)
+            else:
+                return
         self.invite_form = InviteForm()
         self.invite_form.show()
         self.invite_form.raise_()
