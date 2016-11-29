@@ -28,7 +28,7 @@ class RightClickMenu(QMenu):
 
         self.addSeparator()
 
-        quit_action = QAction(QIcon(""), '&Quit Tahoe-LAFS', self)
+        quit_action = QAction(QIcon(""), '&Quit Tahoe-GUI', self)
         quit_action.setShortcut('Ctrl+Q')
         quit_action.triggered.connect(reactor.stop)
         self.addAction(quit_action)
