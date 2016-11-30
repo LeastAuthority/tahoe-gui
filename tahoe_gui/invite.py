@@ -6,10 +6,11 @@ import os
 from PyQt5.QtCore import Qt, QStringListModel
 from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtWidgets import (
-    QCheckBox, QCompleter, QHBoxLayout, QLabel, QLineEdit, QProgressBar,
-    QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
+    QCheckBox, QCompleter, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+    QProgressBar, QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
+from wormhole.errors import WrongPasswordError
 from wormhole.wordlist import raw_words
 from wormhole.wormhole import wormhole
 
@@ -66,7 +67,7 @@ def wormhole_receive(code, use_tor=None):
     else:
         raise Exception("Unknown offer type: {}".format(offer.keys()))
     yield wh.close()
-    returnValue(msg)
+    returnValue(json.loads(msg))
 
 
 class LineEdit(QLineEdit):
@@ -188,15 +189,12 @@ class InviteForm(QWidget):
         reactor.callLater(3, self.checkbox.show)
 
     @inlineCallbacks
-    def setup(self, code):
+    def setup(self, settings):
         folder = os.path.join(os.path.expanduser('~'), 'Private')
         try:
             os.makedirs(folder)
         except OSError:
             pass
-        self.update_progress(1, 'Opening wormhole...')
-        data = yield wormhole_receive(code)
-        settings = json.loads(data)
 
         self.update_progress(2, 'Creating gateway...')
         tahoe = Tahoe(os.path.join(config_dir, 'default'))
@@ -233,18 +231,52 @@ class InviteForm(QWidget):
         yield sleep(1)
         # TODO: Open local folder with file manager instead?
         yield tahoe.command(['webopen'])
-        returnValue(None)
-
-    def done(self, msg):
-        print(msg)
         self.close()
+
+    def reset(self):
+        self.update_progress(0, '')
+        self.lineedit.setText('')
+        self.progressbar.hide()
+        self.label.hide()
+        self.lineedit.show()
+        self.checkbox.show()
+
+    def show_failure(self, failure):
+        print(failure)
+        if failure.type == WrongPasswordError:
+            # The original magic-wormhole error text is as follows:
+            #   "ERROR:  Key confirmation failed. Either you or your
+            #   correspondent typed the code wrong, or a would-be
+            #   man-in-the-middle attacker guessed incorrectly. You could try
+            #   again, giving both your correspondent and the attacker another
+            #   chance."
+            self.show_error("Invite confirmation failed.")
+            QMessageBox.warning(
+                self, "Invite confirmation failed.",
+                "Either you mistyped your invite code, or a potential "
+                "attacker tried to guess your code and failed. To try "
+                "again, you will need to obtain a new invite code from "
+                "your inviter.", QMessageBox.Retry)  # or "service provider"?
+            self.reset()
+        elif failure.type == json.decoder.JSONDecodeError:
+            self.show_error("Invalid response.")
+            QMessageBox.critical(
+                self, "Invalid response.",
+                "Your invite code worked but your inviter did not provide "
+                "the information needed to complete the invitation process. "
+                "Please let them know about the error, and try again later "
+                "with a new invite code.", QMessageBox.Retry)
+            self.reset()
+        # XXX: Other errors?
 
     def return_pressed(self):
         code = self.lineedit.text().lower()
         if is_valid(code):
             self.lineedit.hide()
             self.checkbox.hide()
-            d = self.setup(code)
-            d.addCallback(self.done)
+            self.update_progress(1, 'Opening wormhole...')
+            d = wormhole_receive(code)
+            d.addCallback(self.setup)
+            d.addErrback(self.show_failure)
         else:
             self.show_error("Invalid code")
