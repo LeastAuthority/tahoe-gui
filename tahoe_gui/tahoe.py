@@ -16,54 +16,6 @@ if getattr(sys, 'frozen', False):
         os.path.dirname(sys.executable), 'Tahoe-LAFS')
 
 
-class _CommandProtocol(ProcessProtocol):
-    def __init__(self, parent, callback_trigger=None):
-        self._parent = parent
-        self._trigger = callback_trigger
-        self._when_done = []
-
-    def when_done(self):
-        """
-        :return: a Deferred that fires when this command has completed
-        """
-        d = Deferred()
-        if self._when_done is None:
-            d.callback(None)
-        else:
-            self._when_done.append(d)
-        return d
-
-    def _maybe_trigger_done(self, arg):
-        """
-        internal helper
-        """
-        if self._when_done:
-            for d in self._when_done:
-                d.callback(arg)  # auto errback if arg is Failure
-        self._when_done = None
-
-    # ProcessProtocol API
-    def outReceived(self, data):
-        for line in data.decode('utf-8').strip().split('\n'):
-            self._parent.out_received(line)
-            if self._trigger and self._trigger in line:
-                self._maybe_trigger_done(None)
-
-    # ProcessProtocol API
-    def errReceived(self, data):
-        for line in data.decode('utf-8').strip().split('\n'):
-            self._parent.err_received(line)
-
-    # ProcessProtocol API
-    def processEnded(self, reason):
-        self._maybe_trigger_done(None)
-
-    # ProcessProtocol API
-    def processExited(self, reason):
-        if not isinstance(reason.value, ProcessDone):
-            self._maybe_trigger_done(reason)
-
-
 class Tahoe:
     def __init__(self, nodedir):
         self._nodedir = nodedir
@@ -132,3 +84,54 @@ class Tahoe:
             yield self.command(['stop'])
         yield self.command(['run'], 'client running')
         #self.start_monitor()
+
+
+class _CommandProtocol(ProcessProtocol):
+    """
+    Internal helper
+    """
+    def __init__(self, parent, callback_trigger=None):
+        self._parent = parent
+        self._trigger = callback_trigger
+        self._when_done = []
+
+    def when_done(self):
+        """
+        :return: a Deferred that fires when this command has completed
+        """
+        d = Deferred()
+        if self._when_done is None:
+            d.callback(None)
+        else:
+            self._when_done.append(d)
+        return d
+
+    def _maybe_trigger_done(self, arg):
+        """
+        internal helper
+        """
+        if self._when_done:
+            for d in self._when_done:
+                d.callback(arg)  # auto errback if arg is Failure
+        self._when_done = None
+
+    # ProcessProtocol API
+    def outReceived(self, data):
+        for line in data.decode('utf-8').strip().split('\n'):
+            self._parent.out_received(line)
+            if self._trigger and self._trigger in line:
+                self._maybe_trigger_done(None)
+
+    # ProcessProtocol API
+    def errReceived(self, data):
+        for line in data.decode('utf-8').strip().split('\n'):
+            self._parent.err_received(line)
+
+    # ProcessProtocol API
+    def processEnded(self, reason):
+        self._maybe_trigger_done(None)
+
+    # ProcessProtocol API
+    def processExited(self, reason):
+        if not isinstance(reason.value, ProcessDone):
+            self._maybe_trigger_done(reason)
