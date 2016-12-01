@@ -18,8 +18,7 @@ from tahoe_gui.config import config_dir
 from tahoe_gui.resource import resource
 from tahoe_gui.tahoe import Tahoe
 
-appid = u"lothar.com/wormhole/text-or-file-xfer"
-#relay = u"ws://wormhole-relay.lothar.com:4000/v1"
+appid = u"leastauthority.com/tahoe-gui"
 relay = u"ws://leastauthority.com:4000/v1"
 
 
