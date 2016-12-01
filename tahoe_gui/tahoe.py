@@ -41,20 +41,20 @@ class CommandProtocol(ProcessProtocol):
             self.done.errback(reason)
 
 
-class Tahoe():
-    def __init__(self, nodedir=None):
-        self.nodedir = nodedir
+class Tahoe:
+    def __init__(self, nodedir):
+        self._nodedir = nodedir
 
     def config_set(self, section, option, value):
         config = configparser.RawConfigParser(allow_no_value=True)
-        config.read(os.path.join(self.nodedir, 'tahoe.cfg'))
+        config.read(os.path.join(self._nodedir, 'tahoe.cfg'))
         config.set(section, option, value)
-        with open(os.path.join(self.nodedir, 'tahoe.cfg'), 'w') as f:
+        with open(os.path.join(self._nodedir, 'tahoe.cfg'), 'w') as f:
             config.write(f)
 
     def config_get(self, section, option):
         config = configparser.RawConfigParser(allow_no_value=True)
-        config.read(os.path.join(self.nodedir, 'tahoe.cfg'))
+        config.read(os.path.join(self._nodedir, 'tahoe.cfg'))
         return config.get(section, option)
 
     def out_received(self, msg):
@@ -87,7 +87,7 @@ class Tahoe():
     @inlineCallbacks
     def command(self, args, callback_trigger=None):
         exe = shutil.which('tahoe')
-        args = [exe] + (['-d', self.nodedir] if self.nodedir else []) + args
+        args = [exe] + (['-d', self._nodedir] if self._nodedir else []) + args
         env = os.environ
         env['PYTHONUNBUFFERED'] = '1'
         if sys.platform == 'win32' and getattr(sys, 'frozen', False):
@@ -96,16 +96,16 @@ class Tahoe():
         else:
             protocol = CommandProtocol(self, callback_trigger)
             reactor.spawnProcess(protocol, exe, args=args, env=env)
-            yield protocol.done
+            yield protocol.when_done()
 
     @inlineCallbacks
     def start_monitor(self):
-        furl = os.path.join(self.nodedir, 'private', 'logport.furl')
+        furl = os.path.join(self._nodedir, 'private', 'logport.furl')
         yield self.command(['debug', 'flogtool', 'tail', furl])
 
     @inlineCallbacks
     def start(self):
-        if os.path.isfile(os.path.join(self.nodedir, 'twistd.pid')):
+        if os.path.isfile(os.path.join(self._nodedir, 'twistd.pid')):
             yield self.command(['stop'])
         yield self.command(['run'], 'client running')
         #self.start_monitor()
