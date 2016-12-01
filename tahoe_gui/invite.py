@@ -2,6 +2,7 @@
 
 import json
 import os
+from os.path import join
 
 from PyQt5.QtCore import Qt, QStringListModel
 from PyQt5.QtGui import QFont, QPixmap
@@ -10,13 +11,15 @@ from PyQt5.QtWidgets import (
     QProgressBar, QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
+from twisted.internet.task import deferLater
+from twisted.web.client import Agent, readBody
 from wormhole.errors import WrongPasswordError
 from wormhole.wordlist import raw_words
 from wormhole.wormhole import wormhole
 
 from tahoe_gui.config import config_dir
 from tahoe_gui.resource import resource
-from tahoe_gui.tahoe import Tahoe
+from tahoe_gui.tahoe import TahoeClient
 
 appid = u"leastauthority.com/tahoe-gui"
 relay = u"ws://leastauthority.com:4000/v1"
@@ -144,7 +147,7 @@ class InviteForm(QWidget):
         self.lineedit.setPlaceholderText("Enter invite code")
         self.lineedit.returnPressed.connect(self.return_pressed)
         self.progressbar = QProgressBar()
-        self.progressbar.setMaximum(8)
+        self.progressbar.setMaximum(10)
         self.progressbar.setTextVisible(False)
         self.progressbar.hide()
         middle_layout.addItem(HorizontalSpacer())
@@ -212,21 +215,48 @@ class InviteForm(QWidget):
                                  str(settings[option]))
 
         self.update_progress(4, 'Starting gateway...')
-        yield tahoe.start()
+        try:
+            yield tahoe.start()
+        except Exception as e:
+            self.update_progress(5, "FAILED: {}".format(e))
 
         self.update_progress(5, 'Connecting to grid...')
         # TODO: Replace with call to "readiness" API?
         # https://tahoe-lafs.org/trac/tahoe-lafs/ticket/2844
-        yield sleep(2)
+        agent = Agent(reactor)
 
-        self.update_progress(6, 'Creating magic-folder...')
+        @inlineCallbacks
+        def await_ready():
+            ready = False
+            while not ready:
+                yield deferLater(reactor, 0.1, lambda: None)
+                try:
+                    nodeuri = tahoe.node_uri_fname()
+                    with open(nodeuri, 'rb') as f:
+                        uri = f.read().strip() + b'is_ready'
+                except IOError as e:
+                    ready = False
+                else:
+                    self.update_progress(6, 'Client started...')
+                    resp = yield agent.request(b'GET', uri)
+                    if resp.code == 200:
+                        text = yield readBody(resp)
+                        if text.strip() == b'OK':
+                            ready = True
+                    else:
+                        self.update_progress(6.5, '{}: "{}"...'.format(uri, resp.code))
+                            
+        yield await_ready()
+        self.update_progress(7, 'Client ready...')
+
+        self.update_progress(8, 'Creating magic-folder...')
         yield tahoe.command(['magic-folder', 'create', 'magic:', 'admin',
                              folder])
 
-        self.update_progress(7, 'Reloading...')
+        self.update_progress(9, 'Reloading...')
         yield tahoe.start()
 
-        self.update_progress(8, 'Done!')
+        self.update_progress(10, 'Done!')
         yield sleep(1)
         # TODO: Open local folder with file manager instead?
         yield tahoe.command(['webopen'])

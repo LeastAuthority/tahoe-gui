@@ -16,7 +16,7 @@ from twisted.internet import reactor
 from tahoe_gui.config import config_dir
 from tahoe_gui.invite import InviteForm
 from tahoe_gui.systray import SystemTrayIcon
-from tahoe_gui.tahoe import Tahoe
+from tahoe_gui.tahoe import TahoeClient
 
 
 class Core(object):
@@ -35,7 +35,7 @@ class Core(object):
 
     def stop(self):
         for nodedir in self.get_nodedirs():
-            gateway = Tahoe(nodedir)
+            gateway = TahoeClient(nodedir)
             gateway.command(['stop'])
 
     def start(self):
@@ -46,7 +46,7 @@ class Core(object):
         nodedirs = self.get_nodedirs()
         if nodedirs:
             for nodedir in nodedirs:
-                gateway = Tahoe(nodedir)
+                gateway = TahoeClient(nodedir)
                 gateway.start()
                 self.gateways.append(gateway)
         else:

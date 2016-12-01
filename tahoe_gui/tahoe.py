@@ -15,8 +15,21 @@ if getattr(sys, 'frozen', False):
     os.environ["PATH"] += os.pathsep + os.path.join(
         os.path.dirname(sys.executable), 'Tahoe-LAFS')
 
+class TahoeEnvironment:
+    """
+    I represent a virtualenv that has Tahoe-LAFS installed in it.
+    """
+    def __init__(self, basedir):
+        self._base = basedir
 
-class Tahoe:
+    @inlineCallbacks
+    def create(self):
+        """
+        :return: a Deferred that fires when we've installed a virtualenv
+        """
+
+
+class TahoeClient:
     def __init__(self, nodedir):
         self._nodedir = nodedir
 
@@ -31,6 +44,9 @@ class Tahoe:
         config = configparser.RawConfigParser(allow_no_value=True)
         config.read(os.path.join(self._nodedir, 'tahoe.cfg'))
         return config.get(section, option)
+
+    def node_uri_fname(self):
+        return os.path.join(self._nodedir, 'node.url')
 
     def out_received(self, msg):
         # TODO: Connect to Core via Qt signals/slots?
