@@ -16,13 +16,16 @@ if getattr(sys, 'frozen', False):
         os.path.dirname(sys.executable), 'Tahoe-LAFS')
 
 
-class CommandProtocol(ProcessProtocol):
+class _CommandProtocol(ProcessProtocol):
     def __init__(self, parent, callback_trigger=None):
         self._parent = parent
         self._trigger = callback_trigger
         self._when_done = []
 
     def when_done(self):
+        """
+        :return: a Deferred that fires when this command has completed
+        """
         d = Deferred()
         if self._when_done is None:
             d.callback(None)
@@ -31,6 +34,9 @@ class CommandProtocol(ProcessProtocol):
         return d
 
     def _maybe_trigger_done(self, arg):
+        """
+        internal helper
+        """
         if self._when_done:
             for d in self._when_done:
                 d.callback(arg)  # auto errback if arg is Failure
@@ -111,7 +117,7 @@ class Tahoe:
             from twisted.internet.threads import deferToThread
             yield deferToThread(self._win32_popen, args, env, callback_trigger)
         else:
-            protocol = CommandProtocol(self, callback_trigger)
+            protocol = _CommandProtocol(self, callback_trigger)
             reactor.spawnProcess(protocol, exe, args=args, env=env)
             yield protocol.when_done()
 
