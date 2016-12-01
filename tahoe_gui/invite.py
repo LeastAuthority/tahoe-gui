@@ -209,7 +209,7 @@ class InviteForm(QWidget):
         for option in ('needed', 'happy', 'total'):
             if option in settings:
                 tahoe.config_set('client', 'shares.{}'.format(option),
-                                 settings[option])
+                                 str(settings[option]))
 
         self.update_progress(4, 'Starting gateway...')
         yield tahoe.start()
@@ -269,7 +269,7 @@ class InviteForm(QWidget):
         # XXX: Other errors?
 
     def return_pressed(self):
-        code = self.lineedit.text().lower()
+        code = self.lineedit.text().lower().strip()
         if is_valid(code):
             self.lineedit.hide()
             self.checkbox.hide()
