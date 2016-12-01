@@ -18,27 +18,44 @@ if getattr(sys, 'frozen', False):
 
 class CommandProtocol(ProcessProtocol):
     def __init__(self, parent, callback_trigger=None):
-        self.parent = parent
-        self.trigger = callback_trigger
-        self.done = Deferred()
+        self._parent = parent
+        self._trigger = callback_trigger
+        self._when_done = []
 
+    def when_done(self):
+        d = Deferred()
+        if self._when_done is None:
+            d.callback(None)
+        else:
+            self._when_done.append(d)
+        return d
+
+    def _maybe_trigger_done(self, arg):
+        if self._when_done:
+            for d in self._when_done:
+                d.callback(arg)  # auto errback if arg is Failure
+        self._when_done = None
+
+    # ProcessProtocol API
     def outReceived(self, data):
         for line in data.decode('utf-8').strip().split('\n'):
-            self.parent.out_received(line)
-            if not self.done.called and self.trigger and self.trigger in line:
-                self.done.callback(None)
+            self._parent.out_received(line)
+            if self._trigger and self._trigger in line:
+                self._maybe_trigger_done(None)
 
+    # ProcessProtocol API
     def errReceived(self, data):
         for line in data.decode('utf-8').strip().split('\n'):
-            self.parent.err_received(line)
+            self._parent.err_received(line)
 
+    # ProcessProtocol API
     def processEnded(self, reason):
-        if not self.done.called:
-            self.done.callback(None)
+        self._maybe_trigger_done(None)
 
+    # ProcessProtocol API
     def processExited(self, reason):
-        if not self.done.called and not isinstance(reason.value, ProcessDone):
-            self.done.errback(reason)
+        if not isinstance(reason.value, ProcessDone):
+            self._maybe_trigger_done(reason)
 
 
 class Tahoe:
