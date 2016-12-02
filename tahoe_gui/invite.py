@@ -10,16 +10,17 @@ from PyQt5.QtWidgets import (
     QProgressBar, QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
+from twisted.internet.task import deferLater
+from twisted.web.client import Agent, readBody
 from wormhole.errors import WrongPasswordError
 from wormhole.wordlist import raw_words
 from wormhole.wormhole import wormhole
 
 from tahoe_gui.config import config_dir
 from tahoe_gui.resource import resource
-from tahoe_gui.tahoe import Tahoe
+from tahoe_gui.tahoe import TahoeClient
 
-appid = u"lothar.com/wormhole/text-or-file-xfer"
-#relay = u"ws://wormhole-relay.lothar.com:4000/v1"
+appid = u"leastauthority.com/tahoe-gui"
 relay = u"ws://leastauthority.com:4000/v1"
 
 
@@ -117,6 +118,29 @@ class VerticalSpacer(QSpacerItem):
             20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
 
+@inlineCallbacks
+def _await_ready(invite_form, tahoe):
+    agent = Agent(reactor)
+    ready = False
+    while not ready:
+        yield deferLater(reactor, 0.1, lambda: None)
+        try:
+            nodeuri = tahoe.nodedir_path('node.url')
+            with open(nodeuri, 'rb') as f:
+                uri = f.read().strip() + b'is_ready'
+        except IOError:
+            ready = False
+        else:
+            invite_form.update_progress(6, 'Client started...')
+            resp = yield agent.request(b'GET', uri)
+            if resp.code == 200:
+                text = yield readBody(resp)
+                if text.strip() == b'OK':
+                    ready = True
+            else:
+                invite_form.update_progress(6.5, '{}: "{}"...'.format(uri, resp.code))
+
+
 class InviteForm(QWidget):
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -145,7 +169,7 @@ class InviteForm(QWidget):
         self.lineedit.setPlaceholderText("Enter invite code")
         self.lineedit.returnPressed.connect(self.return_pressed)
         self.progressbar = QProgressBar()
-        self.progressbar.setMaximum(8)
+        self.progressbar.setMaximum(10)
         self.progressbar.setTextVisible(False)
         self.progressbar.hide()
         middle_layout.addItem(HorizontalSpacer())
@@ -210,24 +234,26 @@ class InviteForm(QWidget):
         for option in ('needed', 'happy', 'total'):
             if option in settings:
                 tahoe.config_set('client', 'shares.{}'.format(option),
-                                 settings[option])
+                                 str(settings[option]))
 
         self.update_progress(4, 'Starting gateway...')
         yield tahoe.start()
 
         self.update_progress(5, 'Connecting to grid...')
+
         # TODO: Replace with call to "readiness" API?
         # https://tahoe-lafs.org/trac/tahoe-lafs/ticket/2844
-        yield sleep(2)
+        yield _await_ready(self, tahoe)
+        self.update_progress(7, 'Client ready...')
 
-        self.update_progress(6, 'Creating magic-folder...')
+        self.update_progress(8, 'Creating magic-folder...')
         yield tahoe.command(['magic-folder', 'create', 'magic:', 'admin',
                              folder])
 
-        self.update_progress(7, 'Reloading...')
+        self.update_progress(9, 'Reloading...')
         yield tahoe.start()
 
-        self.update_progress(8, 'Done!')
+        self.update_progress(10, 'Done!')
         yield sleep(1)
         # TODO: Open local folder with file manager instead?
         yield tahoe.command(['webopen'])
@@ -270,7 +296,7 @@ class InviteForm(QWidget):
         # XXX: Other errors?
 
     def return_pressed(self):
-        code = self.lineedit.text().lower()
+        code = self.lineedit.text().lower().strip()
         if is_valid(code):
             self.lineedit.hide()
             self.checkbox.hide()

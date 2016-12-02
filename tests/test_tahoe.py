@@ -13,8 +13,8 @@ import tahoe_gui.tahoe
 @pytest.fixture(scope='module')
 def tahoe(tmpdir_factory):
     config = '[node]\nnickname = default'
-    tahoe = tahoe_gui.tahoe.Tahoe(str(tmpdir_factory.mktemp('tahoe')))
-    with open(os.path.join(tahoe.nodedir, 'tahoe.cfg'), 'w') as f:
+    tahoe = tahoe_gui.tahoe.TahoeClient(str(tmpdir_factory.mktemp('tahoe')))
+    with open(tahoe.nodedir_path('tahoe.cfg'), 'w') as f:
         f.write(config)
     return tahoe
 
