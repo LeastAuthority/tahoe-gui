@@ -2,7 +2,6 @@
 
 import json
 import os
-from os.path import join
 
 from PyQt5.QtCore import Qt, QStringListModel
 from PyQt5.QtGui import QFont, QPixmap
@@ -119,6 +118,29 @@ class VerticalSpacer(QSpacerItem):
             20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
 
+@inlineCallbacks
+def _await_ready(invite_form, tahoe):
+    agent = Agent(reactor)
+    ready = False
+    while not ready:
+        yield deferLater(reactor, 0.1, lambda: None)
+        try:
+            nodeuri = tahoe.nodedir_path('node.url')
+            with open(nodeuri, 'rb') as f:
+                uri = f.read().strip() + b'is_ready'
+        except IOError:
+            ready = False
+        else:
+            invite_form.update_progress(6, 'Client started...')
+            resp = yield agent.request(b'GET', uri)
+            if resp.code == 200:
+                text = yield readBody(resp)
+                if text.strip() == b'OK':
+                    ready = True
+            else:
+                invite_form.update_progress(6.5, '{}: "{}"...'.format(uri, resp.code))
+
+
 class InviteForm(QWidget):
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -215,38 +237,13 @@ class InviteForm(QWidget):
                                  str(settings[option]))
 
         self.update_progress(4, 'Starting gateway...')
-        try:
-            yield tahoe.start()
-        except Exception as e:
-            self.update_progress(5, "FAILED: {}".format(e))
+        yield tahoe.start()
 
         self.update_progress(5, 'Connecting to grid...')
+
         # TODO: Replace with call to "readiness" API?
         # https://tahoe-lafs.org/trac/tahoe-lafs/ticket/2844
-        agent = Agent(reactor)
-
-        @inlineCallbacks
-        def await_ready():
-            ready = False
-            while not ready:
-                yield deferLater(reactor, 0.1, lambda: None)
-                try:
-                    nodeuri = tahoe.node_uri_fname()
-                    with open(nodeuri, 'rb') as f:
-                        uri = f.read().strip() + b'is_ready'
-                except IOError as e:
-                    ready = False
-                else:
-                    self.update_progress(6, 'Client started...')
-                    resp = yield agent.request(b'GET', uri)
-                    if resp.code == 200:
-                        text = yield readBody(resp)
-                        if text.strip() == b'OK':
-                            ready = True
-                    else:
-                        self.update_progress(6.5, '{}: "{}"...'.format(uri, resp.code))
-                            
-        yield await_ready()
+        yield _await_ready(self, tahoe)
         self.update_progress(7, 'Client ready...')
 
         self.update_progress(8, 'Creating magic-folder...')
