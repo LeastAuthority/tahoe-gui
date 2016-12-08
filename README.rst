@@ -22,6 +22,17 @@ From source (requires Python 3.5):
 1. ``python3.5 -m pip install git+https://github.com/LeastAuthority/tahoe-gui.git``
 2. ``tahoe-gui``
 
+(Note: this assumes that a `tahoe` binary is already installed and available in $PATH. If not, see the virtualenv method below.)
+
+GNU/Linux, inside a virtualenv (tested on Debian 8.6 "jessie" and Ubuntu 16.10 "Yakkety Yak"):
+
+1. `sudo apt-get install virtualenv git build-essential python-dev libssl-dev libffi-dev python-pyqt5`
+2. `virtualenv --python=python2 --system-site-packages ~/.local/venvs/tahoe-gui`
+3. `~/.local/venvs/tahoe-gui/bin/pip install --upgrade pip setuptools`
+4. `~/.local/venvs/tahoe-gui/bin/pip install --find-links=https://tahoe-lafs.org/deps/ git+https://github.com/tahoe-lafs/tahoe-lafs.git`
+5. `~/.local/venvs/tahoe-gui/bin/pip install --upgrade git+https://github.com/LeastAuthority/tahoe-gui.git`
+6. `PATH=$PATH:~/.local/venvs/tahoe-gui/bin tahoe-gui`
+
 Mac OS X:
 
 1. Download `Tahoe-GUI.dmg`_
@@ -37,15 +48,3 @@ Windows (64-bit):
 .. _Tahoe-GUI.dmg: https://buildbot.gridsync.io/packages/Tahoe-GUI.dmg
 .. _Tahoe-GUI-win64.zip: https://buildbot.gridsync.io/packages/Tahoe-GUI-win64.zip
 
-Debian:
-
-To install from inside a clone of this repository on Debian (tested on
-"jessie"):
-
-1. `sudo apt-get install virtualenv python3 python-pyqt5`
-2. `virtualenv --python=python3 --system-site-packages venv`
-3. `./venv/bin/pip install --upgrade pip setuptools`
-4. `./venv/bin/pip install --editable .`
-
-The "upgrade" step is because the `pip` that ships with the Debian
-virtualenv package is very old.

@@ -27,8 +27,8 @@ class Core(object):
 
     def get_nodedirs(self):
         nodedirs = []
-        for file in os.listdir(config_dir):
-            filepath = os.path.join(config_dir, file)
+        for filename in os.listdir(config_dir):
+            filepath = os.path.join(config_dir, filename)
             if os.path.isdir(filepath):
                 nodedirs.append(filepath)
         return nodedirs

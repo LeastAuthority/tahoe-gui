@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from importlib import reload
+if sys.version_info >= (3, 4):
+    from importlib import reload
 
 import tahoe_gui
 

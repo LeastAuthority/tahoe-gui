@@ -8,18 +8,24 @@ from setuptools import setup
 
 
 # PyQt5 wheels are only available for python 3.5 on Linux, macOS, and Windows
-if (sys.version_info.major, sys.version_info.minor) != (3, 5):
-    sys.exit("Please use Python version 3.5")
+#if (sys.version_info.major, sys.version_info.minor) != (3, 5):
+#    sys.exit("Please use Python version 3.5")
 
-if sys.platform not in ('linux', 'darwin', 'win32'):
-    sys.exit("Platform '{}' not supported".format(sys.platform))
+#if sys.platform not in ('linux', 'darwin', 'win32'):
+#    sys.exit("Platform '{}' not supported".format(sys.platform))
 
 
 metadata_file = open('tahoe_gui/__init__.py').read()
 metadata = dict(re.findall("__([a-z]+)__\s*=\s*'([^']+)'", metadata_file))
 
+
 version_file = open('tahoe_gui/_version.py').read()
 version = re.findall("__version__\s*=\s*'([^']+)'", version_file)[0]
+
+
+requirements = ['qt5reactor', 'magic-wormhole']
+if (sys.version_info.major, sys.version_info.minor) == (3, 5):
+    requirements.append('PyQt5')
 
 
 setup(
@@ -75,5 +81,5 @@ setup(
     entry_points={
         'console_scripts': ['tahoe-gui=tahoe_gui.cli:main'],
     },
-    install_requires=['PyQt5', 'qt5reactor', 'magic-wormhole'],
+    install_requires=requirements,
 )

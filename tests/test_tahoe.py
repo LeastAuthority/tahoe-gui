@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import difflib
-import importlib
 import os
 import sys
+if sys.version_info >= (3, 4):
+    from importlib import reload
 
 import pytest
 
@@ -31,7 +32,7 @@ def test_config_set(tahoe):
 def test_append_tahoe_bundle_to_PATH(monkeypatch):
     monkeypatch.setattr("sys.frozen", True, raising=False)
     old_path = os.environ['PATH']
-    importlib.reload(tahoe_gui.tahoe)
+    reload(tahoe_gui.tahoe)
     delta = ''
     for _, s in enumerate(difflib.ndiff(old_path, os.environ['PATH'])):
         if s[0] == '+':

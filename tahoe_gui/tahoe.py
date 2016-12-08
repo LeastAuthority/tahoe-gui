@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import configparser
+from __future__ import print_function
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser  # pylint: disable=import-error
 import os
 import shutil
 import sys
+
 
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, Deferred
@@ -41,7 +47,7 @@ class CommandProtocol(ProcessProtocol):
             self.done.errback(reason)
 
 
-class Tahoe():
+class Tahoe(object):
     def __init__(self, nodedir=None):
         self.nodedir = nodedir
 

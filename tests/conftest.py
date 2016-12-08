@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication
 
