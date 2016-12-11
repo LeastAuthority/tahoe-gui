@@ -72,22 +72,6 @@ def wormhole_receive(code, use_tor=None):
     returnValue(json.loads(msg))
 
 
-class LineEdit(QLineEdit):
-    def keyPressEvent(self, event):
-        key = event.key()
-        text = self.text()
-        if key == Qt.Key_Space:
-            if text and not text.endswith('-'):
-                self.setText(text + '-')
-        elif key == Qt.Key_Tab:
-            if text and len(text.split('-')) < 3 and not text.endswith('-'):
-                self.setText(text + '-')
-            else:
-                self.setText(text)
-        else:
-            return QLineEdit.keyPressEvent(self, event)
-
-
 class Completer(QCompleter):
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -107,75 +91,105 @@ class Completer(QCompleter):
         return [str(path.split('-')[-1])]
 
 
-class InviteForm(QWidget):
+class LineEdit(QLineEdit):
     def __init__(self):
         super(self.__class__, self).__init__()
-        self.resize(500, 333)
-        layout = QVBoxLayout(self)
-
-        top_layout = QHBoxLayout()
-        self.icon = QLabel()
-        pixmap = QPixmap(resource('mail-envelope-open.png')).scaled(128, 128)
-        self.icon.setPixmap(pixmap)
-        top_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
-        top_layout.addWidget(self.icon)
-        top_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
-
-        middle_layout = QHBoxLayout()
-        self.lineedit = LineEdit(self)
         font = QFont()
         font.setPointSize(16)
         model = QStringListModel()
         model.setStringList(wordlist)
         completer = Completer()
         completer.setModel(model)
-        self.lineedit.setCompleter(completer)  # XXX: Disable?
-        self.lineedit.setFont(font)
-        self.lineedit.setAlignment(Qt.AlignCenter)
-        self.lineedit.setPlaceholderText("Enter invite code")
+        self.setFont(font)
+        self.setCompleter(completer)
+        self.setAlignment(Qt.AlignCenter)
+        #self.setPlaceholderText("Enter invite code")
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        text = self.text()
+        if key == Qt.Key_Space:
+            if text and not text.endswith('-'):
+                self.setText(text + '-')
+        elif key == Qt.Key_Tab:
+            if text and len(text.split('-')) < 3 and not text.endswith('-'):
+                self.setText(text + '-')
+            else:
+                self.setText(text)
+        else:
+            return QLineEdit.keyPressEvent(self, event)
+
+
+class InviteForm(QWidget):
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        self.resize(500, 333)
+        layout = QVBoxLayout(self)
+
+        layout_1 = QHBoxLayout()
+        self.icon = QLabel()
+        pixmap = QPixmap(resource('mail-envelope-open.png')).scaled(128, 128)
+        self.icon.setPixmap(pixmap)
+        layout_1.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
+        layout_1.addWidget(self.icon)
+        layout_1.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
+
+        layout_2 = QHBoxLayout()
+        self.label = QLabel("Enter invite code:")
+        font = QFont()
+        font.setPointSize(14)
+        self.label.setFont(font)
+        self.label.setStyleSheet("color: grey")
+        layout_2.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
+        layout_2.addWidget(self.label)
+        layout_2.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
+
+        layout_3 = QHBoxLayout()
+        self.lineedit = LineEdit()
         self.lineedit.returnPressed.connect(self.return_pressed)
         self.progressbar = QProgressBar()
         self.progressbar.setMaximum(8)
         self.progressbar.setTextVisible(False)
         self.progressbar.hide()
-        middle_layout.addItem(QSpacerItem(85, 0, QSizePolicy.Preferred, 0))
-        middle_layout.addWidget(self.lineedit)
-        middle_layout.addWidget(self.progressbar)
-        middle_layout.addItem(QSpacerItem(85, 0, QSizePolicy.Preferred, 0))
+        layout_3.addItem(QSpacerItem(85, 0, QSizePolicy.Preferred, 0))
+        layout_3.addWidget(self.lineedit)
+        layout_3.addWidget(self.progressbar)
+        layout_3.addItem(QSpacerItem(85, 0, QSizePolicy.Preferred, 0))
 
-        bottom_layout = QHBoxLayout()
+        layout_4 = QHBoxLayout()
         self.checkbox = QCheckBox(self)
         self.checkbox.setText("Always connect using Tor")
         self.checkbox.setEnabled(True)
         self.checkbox.setCheckable(False)
         self.checkbox.setStyleSheet("color: grey")
         self.checkbox.setFocusPolicy(Qt.NoFocus)
-        self.label = QLabel()
-        self.label.hide()
-        bottom_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
-        bottom_layout.addWidget(self.checkbox)
-        bottom_layout.addWidget(self.label)
-        bottom_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
+        self.message = QLabel()
+        self.message.hide()
+        layout_4.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
+        layout_4.addWidget(self.checkbox)
+        layout_4.addWidget(self.message)
+        layout_4.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
 
         layout.addItem(QSpacerItem(0, 0, 0, QSizePolicy.Expanding))
-        layout.addLayout(top_layout)
-        layout.addLayout(middle_layout)
-        layout.addLayout(bottom_layout)
+        layout.addLayout(layout_1)
+        layout.addLayout(layout_2)
+        layout.addLayout(layout_3)
+        layout.addLayout(layout_4)
         layout.addItem(QSpacerItem(0, 0, 0, QSizePolicy.Expanding))
 
     def update_progress(self, step, message):
         self.progressbar.setValue(step)
         self.progressbar.show()
-        self.label.setStyleSheet("color: grey")
-        self.label.setText(message)
-        self.label.show()
+        self.message.setStyleSheet("color: grey")
+        self.message.setText(message)
+        self.message.show()
 
     def show_error(self, message):
-        self.label.setStyleSheet("color: red")
-        self.label.setText(message)
+        self.message.setStyleSheet("color: red")
+        self.message.setText(message)
         self.checkbox.hide()
-        self.label.show()
-        reactor.callLater(3, self.label.hide)
+        self.message.show()
+        reactor.callLater(3, self.message.hide)
         reactor.callLater(3, self.checkbox.show)
 
     @inlineCallbacks
@@ -225,9 +239,9 @@ class InviteForm(QWidget):
 
     def reset(self):
         self.update_progress(0, '')
-        self.lineedit.setText('')
+        self.label.setText("Enter invite code:")
         self.progressbar.hide()
-        self.label.hide()
+        self.message.hide()
         self.lineedit.show()
         self.checkbox.show()
 
@@ -262,6 +276,7 @@ class InviteForm(QWidget):
     def return_pressed(self):
         code = self.lineedit.text().lower()
         if is_valid(code):
+            self.label.setText('')
             self.lineedit.hide()
             self.checkbox.hide()
             self.update_progress(1, 'Opening wormhole...')
