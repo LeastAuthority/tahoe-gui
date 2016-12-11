@@ -122,7 +122,7 @@ class VerticalSpacer(QSpacerItem):
 class InviteForm(QWidget):
     def __init__(self):
         super(self.__class__, self).__init__()
-        self.resize(450, 300)
+        self.resize(500, 333)
         layout = QVBoxLayout(self)
 
         top_layout = QHBoxLayout()
@@ -150,10 +150,10 @@ class InviteForm(QWidget):
         self.progressbar.setMaximum(8)
         self.progressbar.setTextVisible(False)
         self.progressbar.hide()
-        middle_layout.addItem(HorizontalSpacer())
+        middle_layout.addItem(QSpacerItem(85, 0, QSizePolicy.Preferred, 0))
         middle_layout.addWidget(self.lineedit)
         middle_layout.addWidget(self.progressbar)
-        middle_layout.addItem(HorizontalSpacer())
+        middle_layout.addItem(QSpacerItem(85, 0, QSizePolicy.Preferred, 0))
 
         bottom_layout = QHBoxLayout()
         self.checkbox = QCheckBox(self)
