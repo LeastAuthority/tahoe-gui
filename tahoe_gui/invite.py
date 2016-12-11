@@ -107,18 +107,6 @@ class Completer(QCompleter):
         return [str(path.split('-')[-1])]
 
 
-class HorizontalSpacer(QSpacerItem):
-    def __init__(self):
-        super(self.__class__, self).__init__(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-
-
-class VerticalSpacer(QSpacerItem):
-    def __init__(self):
-        super(self.__class__, self).__init__(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-
 class InviteForm(QWidget):
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -129,9 +117,9 @@ class InviteForm(QWidget):
         self.icon = QLabel()
         pixmap = QPixmap(resource('mail-envelope-open.png')).scaled(128, 128)
         self.icon.setPixmap(pixmap)
-        top_layout.addItem(HorizontalSpacer())
+        top_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
         top_layout.addWidget(self.icon)
-        top_layout.addItem(HorizontalSpacer())
+        top_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
 
         middle_layout = QHBoxLayout()
         self.lineedit = LineEdit(self)
@@ -164,16 +152,16 @@ class InviteForm(QWidget):
         self.checkbox.setFocusPolicy(Qt.NoFocus)
         self.label = QLabel()
         self.label.hide()
-        bottom_layout.addItem(HorizontalSpacer())
+        bottom_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
         bottom_layout.addWidget(self.checkbox)
         bottom_layout.addWidget(self.label)
-        bottom_layout.addItem(HorizontalSpacer())
+        bottom_layout.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
 
-        layout.addItem(VerticalSpacer())
+        layout.addItem(QSpacerItem(0, 0, 0, QSizePolicy.Expanding))
         layout.addLayout(top_layout)
         layout.addLayout(middle_layout)
         layout.addLayout(bottom_layout)
-        layout.addItem(VerticalSpacer())
+        layout.addItem(QSpacerItem(0, 0, 0, QSizePolicy.Expanding))
 
     def update_progress(self, step, message):
         self.progressbar.setValue(step)
