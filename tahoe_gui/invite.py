@@ -92,8 +92,9 @@ class Completer(QCompleter):
 
 
 class LineEdit(QLineEdit):
-    def __init__(self):
+    def __init__(self, parent=None):
         super(self.__class__, self).__init__()
+        self.parent = parent
         font = QFont()
         font.setPointSize(16)
         model = QStringListModel()
@@ -116,6 +117,11 @@ class LineEdit(QLineEdit):
                 self.setText(text + '-')
             else:
                 self.setText(text)
+        elif key == Qt.Key_Escape:
+            if text:
+                self.parent.reset()
+            else:
+                self.parent.close()
         else:
             return QLineEdit.keyPressEvent(self, event)
 
@@ -145,7 +151,7 @@ class InviteForm(QWidget):
         layout_2.addItem(QSpacerItem(0, 0, QSizePolicy.Expanding, 0))
 
         layout_3 = QHBoxLayout()
-        self.lineedit = LineEdit()
+        self.lineedit = LineEdit(self)
         self.lineedit.returnPressed.connect(self.return_pressed)
         self.progressbar = QProgressBar()
         self.progressbar.setMaximum(8)
@@ -240,6 +246,7 @@ class InviteForm(QWidget):
     def reset(self):
         self.update_progress(0, '')
         self.label.setText("Enter invite code:")
+        self.lineedit.setText('')
         self.progressbar.hide()
         self.message.hide()
         self.lineedit.show()
