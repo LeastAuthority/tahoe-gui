@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QProgressBar, QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 from twisted.internet import reactor
 from twisted.internet.defer import (
-        CancelledError, Deferred, inlineCallbacks, returnValue)
+    CancelledError, Deferred, inlineCallbacks, returnValue)
 from wormhole.errors import WrongPasswordError
 from wormhole.wordlist import raw_words
 from wormhole.wormhole import wormhole
@@ -126,7 +126,7 @@ class LineEdit(QLineEdit):
 
 
 class InviteForm(QWidget):
-    def __init__(self):
+    def __init__(self):  # pylint: disable=too-many-statements
         super(self.__class__, self).__init__()
         self.step = 0
         self.resize(500, 333)
