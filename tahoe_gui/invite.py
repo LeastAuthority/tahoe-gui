@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
 import json
 import os
 
@@ -11,7 +9,8 @@ from PyQt5.QtWidgets import (
     QCheckBox, QCompleter, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
     QProgressBar, QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 from twisted.internet import reactor
-from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
+from twisted.internet.defer import (
+        CancelledError, Deferred, inlineCallbacks, returnValue)
 from wormhole.errors import WrongPasswordError
 from wormhole.wordlist import raw_words
 from wormhole.wormhole import wormhole
@@ -129,6 +128,7 @@ class LineEdit(QLineEdit):
 class InviteForm(QWidget):
     def __init__(self):
         super(self.__class__, self).__init__()
+        self.step = 0
         self.resize(500, 333)
         layout = QVBoxLayout(self)
 
@@ -184,6 +184,7 @@ class InviteForm(QWidget):
         layout.addItem(QSpacerItem(0, 0, 0, QSizePolicy.Expanding))
 
     def update_progress(self, step, message):
+        self.step = step
         self.progressbar.setValue(step)
         self.progressbar.show()
         self.message.setStyleSheet("color: grey")
@@ -253,44 +254,40 @@ class InviteForm(QWidget):
         self.checkbox.show()
 
     def show_failure(self, failure):
-        print(failure)
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Warning)
+        msg.setStandardButtons(QMessageBox.Retry)
+        msg.setEscapeButton(QMessageBox.Retry)
+        msg.setDetailedText(str(failure))
         if failure.type == WrongPasswordError:
-            # The original magic-wormhole error text is as follows:
-            #   "ERROR:  Key confirmation failed. Either you or your
-            #   correspondent typed the code wrong, or a would-be
-            #   man-in-the-middle attacker guessed incorrectly. You could try
-            #   again, giving both your correspondent and the attacker another
-            #   chance."
-            self.show_error("Invite confirmation failed.")
-            msg = QMessageBox(self)
-            msg.setIcon(QMessageBox.Warning)
-            msg.setWindowTitle("Invalid response.")
+            self.show_error("Invite confirmation failed")
+            msg.setWindowTitle("Invite confirmation failed")
             msg.setText(
                 "Either you mistyped your invite code, or a potential "
                 "attacker tried to guess your code and failed. To try "
                 "again, you will need to obtain a new invite code from "
                 "your inviter.")  # or "service provider"?
-            msg.setStandardButtons(QMessageBox.Retry)
-            msg.setEscapeButton(QMessageBox.Retry)
-            msg.setDetailedText(str(failure))
-            msg.exec_()
-            self.reset()
         elif failure.type == json.decoder.JSONDecodeError:
-            self.show_error("Invalid response.")
-            msg = QMessageBox(self)
+            self.show_error("Invalid response")
             msg.setIcon(QMessageBox.Critical)
-            msg.setWindowTitle("Invalid response.")
+            msg.setWindowTitle("Invalid response")
             msg.setText(
                 "Your invite code worked but your inviter did not provide "
                 "the information needed to complete the invitation process. "
                 "Please let them know about the error, and try again later "
                 "with a new invite code.")
-            msg.setStandardButtons(QMessageBox.Retry)
-            msg.setEscapeButton(QMessageBox.Retry)
-            msg.setDetailedText(str(failure))
-            msg.exec_()
-            self.reset()
+        elif failure.type == CancelledError and self.step == 1:
+            self.show_error("Invite timed out")
+            msg.setWindowTitle("Invite timed out")
+            msg.setText(
+                "The invitation process has timed out. Your invite code may "
+                "have expired. Please request a new invite code from your "
+                "inviter and try again.")
         # XXX: Other errors?
+        else:
+            return
+        msg.exec_()
+        self.reset()
 
     def return_pressed(self):
         code = self.lineedit.text().lower()
@@ -302,5 +299,6 @@ class InviteForm(QWidget):
             d = wormhole_receive(code)
             d.addCallback(self.setup)
             d.addErrback(self.show_failure)
+            reactor.callLater(5, d.cancel)
         else:
             self.show_error("Invalid code")
