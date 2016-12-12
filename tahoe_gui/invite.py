@@ -262,21 +262,33 @@ class InviteForm(QWidget):
             #   again, giving both your correspondent and the attacker another
             #   chance."
             self.show_error("Invite confirmation failed.")
-            QMessageBox.warning(
-                self, "Invite confirmation failed.",
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle("Invalid response.")
+            msg.setText(
                 "Either you mistyped your invite code, or a potential "
                 "attacker tried to guess your code and failed. To try "
                 "again, you will need to obtain a new invite code from "
-                "your inviter.", QMessageBox.Retry)  # or "service provider"?
+                "your inviter.")  # or "service provider"?
+            msg.setStandardButtons(QMessageBox.Retry)
+            msg.setEscapeButton(QMessageBox.Retry)
+            msg.setDetailedText(str(failure))
+            msg.exec_()
             self.reset()
         elif failure.type == json.decoder.JSONDecodeError:
             self.show_error("Invalid response.")
-            QMessageBox.critical(
-                self, "Invalid response.",
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Invalid response.")
+            msg.setText(
                 "Your invite code worked but your inviter did not provide "
                 "the information needed to complete the invitation process. "
                 "Please let them know about the error, and try again later "
-                "with a new invite code.", QMessageBox.Retry)
+                "with a new invite code.")
+            msg.setStandardButtons(QMessageBox.Retry)
+            msg.setEscapeButton(QMessageBox.Retry)
+            msg.setDetailedText(str(failure))
+            msg.exec_()
             self.reset()
         # XXX: Other errors?
 
