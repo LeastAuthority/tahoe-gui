@@ -26,12 +26,12 @@ From source (requires Python 3.5):
 
 GNU/Linux, inside a virtualenv (tested on Debian 8.6 "jessie" and Ubuntu 16.10 "Yakkety Yak"):
 
-1. `sudo apt-get install virtualenv git build-essential python-dev libssl-dev libffi-dev python-pyqt5`
-2. `virtualenv --python=python2 --system-site-packages ~/.local/venvs/tahoe-gui`
-3. `~/.local/venvs/tahoe-gui/bin/pip install --upgrade pip setuptools`
-4. `~/.local/venvs/tahoe-gui/bin/pip install --find-links=https://tahoe-lafs.org/deps/ git+https://github.com/tahoe-lafs/tahoe-lafs.git`
-5. `~/.local/venvs/tahoe-gui/bin/pip install --upgrade git+https://github.com/LeastAuthority/tahoe-gui.git`
-6. `PATH=$PATH:~/.local/venvs/tahoe-gui/bin tahoe-gui`
+1. ``sudo apt-get install virtualenv git build-essential python-dev libssl-dev libffi-dev python-pyqt5``
+2. ``virtualenv --python=python2 --system-site-packages ~/.local/venvs/tahoe-gui``
+3. ``~/.local/venvs/tahoe-gui/bin/pip install --upgrade pip setuptools``
+4. ``~/.local/venvs/tahoe-gui/bin/pip install --find-links=https://tahoe-lafs.org/deps/ git+https://github.com/tahoe-lafs/tahoe-lafs.git``
+5. ``~/.local/venvs/tahoe-gui/bin/pip install --upgrade git+https://github.com/LeastAuthority/tahoe-gui.git``
+6. ``PATH=$PATH:~/.local/venvs/tahoe-gui/bin tahoe-gui``
 
 Mac OS X:
 
