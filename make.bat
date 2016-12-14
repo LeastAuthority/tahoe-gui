@@ -39,6 +39,7 @@ call pushd .\build\tahoe-lafs
 call C:\Python27\python.exe setup.py update_version
 call pip install --find-links=https://tahoe-lafs.org/deps/ .
 call pip install git+https://github.com/pyinstaller/pyinstaller.git
+call pip install zope.interface==4.3.2
 call set PYTHONHASHSEED=1
 call pyinstaller tahoe.spec
 call python -m zipfile -c dist\Tahoe-LAFS.zip dist\Tahoe-LAFS
