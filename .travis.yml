@@ -28,7 +28,7 @@ before_script:
   - which tox && tox --version
 script:
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then tox -e py27,py34,py35,flake8,pylint; fi
-  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then tox; fi
+  - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then tox -e py35,flake8; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then make frozen-tahoe; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then dist/Tahoe-LAFS/tahoe --version-and-path; fi
   - if [ "${TRAVIS_OS_NAME}" = "osx" ]; then make dmg; fi
