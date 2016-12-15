@@ -7,7 +7,6 @@ try:
 except ImportError:
     import ConfigParser as configparser  # pylint: disable=import-error
 import os
-import shutil
 import sys
 from io import StringIO
 
@@ -15,6 +14,7 @@ from twisted.internet import reactor
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
 from twisted.internet.error import ProcessDone
 from twisted.internet.protocol import ProcessProtocol
+from twisted.python.procutils import which
 
 
 if getattr(sys, 'frozen', False):
@@ -96,7 +96,7 @@ class Tahoe(object):
 
     @inlineCallbacks
     def command(self, args, callback_trigger=None):
-        exe = (self.executable if self.executable else shutil.which('tahoe'))
+        exe = (self.executable if self.executable else which('tahoe')[0])
         args = [exe] + (['-d', self.nodedir] if self.nodedir else []) + args
         env = os.environ
         env['PYTHONUNBUFFERED'] = '1'
