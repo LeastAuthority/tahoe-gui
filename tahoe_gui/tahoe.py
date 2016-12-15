@@ -83,7 +83,7 @@ class Tahoe(object):
             args, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             universal_newlines=True, creationflags=0x08000000)
         for line in iter(proc.stdout.readline, ''):
-            self.out_received(line.rstrip())
+            self.line_received(line.rstrip())
             if callback_trigger and callback_trigger in line.rstrip():
                 return
         proc.poll()
