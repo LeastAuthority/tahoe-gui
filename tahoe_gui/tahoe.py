@@ -82,12 +82,17 @@ class Tahoe(object):
         proc = subprocess.Popen(
             args, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             universal_newlines=True, creationflags=0x08000000)
+        output = StringIO()
         for line in iter(proc.stdout.readline, ''):
+            output.write(line)
             self.line_received(line.rstrip())
             if callback_trigger and callback_trigger in line.rstrip():
                 return
         proc.poll()
-        return proc.returncode
+        if proc.returncode:
+            raise subprocess.CalledProcessError(proc.returncode, args)
+        else:
+            return output.getvalue()
 
     @inlineCallbacks
     def command(self, args, callback_trigger=None):
@@ -97,12 +102,13 @@ class Tahoe(object):
         env['PYTHONUNBUFFERED'] = '1'
         if sys.platform == 'win32' and getattr(sys, 'frozen', False):
             from twisted.internet.threads import deferToThread
-            yield deferToThread(self._win32_popen, args, env, callback_trigger)
+            output = yield deferToThread(
+                self._win32_popen, args, env, callback_trigger)
         else:
             protocol = CommandProtocol(self, callback_trigger)
             reactor.spawnProcess(protocol, exe, args=args, env=env)
             output = yield protocol.done
-            returnValue(output)
+        returnValue(output)
 
     @inlineCallbacks
     def start_monitor(self):
