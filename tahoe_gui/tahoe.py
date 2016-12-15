@@ -110,10 +110,10 @@ class Tahoe(object):
             output = yield protocol.done
         returnValue(output)
 
-    @inlineCallbacks
-    def start_monitor(self):
-        furl = os.path.join(self.nodedir, 'private', 'logport.furl')
-        yield self.command(['debug', 'flogtool', 'tail', furl])
+    #@inlineCallbacks
+    #def start_monitor(self):
+    #    furl = os.path.join(self.nodedir, 'private', 'logport.furl')
+    #    yield self.command(['debug', 'flogtool', 'tail', furl])
 
     @inlineCallbacks
     def start(self):
