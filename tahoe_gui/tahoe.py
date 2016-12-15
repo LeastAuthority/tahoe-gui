@@ -9,10 +9,10 @@ except ImportError:
 import os
 import shutil
 import sys
-
+from io import StringIO
 
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
 from twisted.internet.error import ProcessDone
 from twisted.internet.protocol import ProcessProtocol
 
@@ -27,9 +27,12 @@ class CommandProtocol(ProcessProtocol):
         self.parent = parent
         self.trigger = callback_trigger
         self.done = Deferred()
+        self.output = StringIO()
 
     def outReceived(self, data):
-        for line in data.decode('utf-8').strip().split('\n'):
+        data = data.decode('utf-8')
+        self.output.write(data)
+        for line in data.strip().split('\n'):
             self.parent.line_received(line)
             if not self.done.called and self.trigger and self.trigger in line:
                 self.done.callback(None)
@@ -39,7 +42,7 @@ class CommandProtocol(ProcessProtocol):
 
     def processEnded(self, reason):
         if not self.done.called:
-            self.done.callback(None)
+            self.done.callback(self.output.getvalue())
 
     def processExited(self, reason):
         if not self.done.called and not isinstance(reason.value, ProcessDone):
@@ -98,7 +101,8 @@ class Tahoe(object):
         else:
             protocol = CommandProtocol(self, callback_trigger)
             reactor.spawnProcess(protocol, exe, args=args, env=env)
-            yield protocol.done
+            output = yield protocol.done
+            returnValue(output)
 
     @inlineCallbacks
     def start_monitor(self):
