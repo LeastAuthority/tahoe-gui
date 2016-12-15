@@ -48,8 +48,9 @@ class CommandProtocol(ProcessProtocol):
 
 
 class Tahoe(object):
-    def __init__(self, nodedir=None):
+    def __init__(self, nodedir=None, executable=None):
         self.nodedir = nodedir
+        self.executable = executable
 
     def config_set(self, section, option, value):
         config = configparser.RawConfigParser(allow_no_value=True)
@@ -92,7 +93,7 @@ class Tahoe(object):
 
     @inlineCallbacks
     def command(self, args, callback_trigger=None):
-        exe = shutil.which('tahoe')
+        exe = (self.executable if self.executable else shutil.which('tahoe'))
         args = [exe] + (['-d', self.nodedir] if self.nodedir else []) + args
         env = os.environ
         env['PYTHONUNBUFFERED'] = '1'
