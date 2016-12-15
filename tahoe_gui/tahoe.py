@@ -30,13 +30,12 @@ class CommandProtocol(ProcessProtocol):
 
     def outReceived(self, data):
         for line in data.decode('utf-8').strip().split('\n'):
-            self.parent.out_received(line)
+            self.parent.line_received(line)
             if not self.done.called and self.trigger and self.trigger in line:
                 self.done.callback(None)
 
     def errReceived(self, data):
-        for line in data.decode('utf-8').strip().split('\n'):
-            self.parent.err_received(line)
+        self.outReceived(data)
 
     def processEnded(self, reason):
         if not self.done.called:
@@ -64,13 +63,9 @@ class Tahoe(object):
         config.read(os.path.join(self.nodedir, 'tahoe.cfg'))
         return config.get(section, option)
 
-    def out_received(self, msg):
+    def line_received(self, line):
         # TODO: Connect to Core via Qt signals/slots?
-        print(">>> " + msg)
-
-    def err_received(self, msg):
-        # TODO: Connect to Core via Qt signals/slots?
-        print(">>> " + msg)
+        print(">>> " + line)
 
     def _win32_popen(self, args, env, callback_trigger=None):
         # This is a workaround to prevent Command Prompt windows from opening
