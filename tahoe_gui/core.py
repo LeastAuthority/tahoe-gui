@@ -36,7 +36,7 @@ class Core(object):
     def stop(self):
         for nodedir in self.get_nodedirs():
             gateway = Tahoe(nodedir)
-            gateway.command(['stop'])
+            gateway.stop()
 
     def start(self):
         try:
