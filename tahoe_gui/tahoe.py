@@ -8,7 +8,7 @@ except ImportError:
     import ConfigParser as configparser  # pylint: disable=import-error
 import os
 import sys
-from io import StringIO
+from io import BytesIO
 
 from twisted.internet import reactor
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue
@@ -27,11 +27,11 @@ class CommandProtocol(ProcessProtocol):
         self.parent = parent
         self.trigger = callback_trigger
         self.done = Deferred()
-        self.output = StringIO()
+        self.output = BytesIO()
 
     def outReceived(self, data):
-        data = data.decode('utf-8')
         self.output.write(data)
+        data = data.decode('utf-8')
         for line in data.strip().split('\n'):
             self.parent.line_received(line)
             if not self.done.called and self.trigger and self.trigger in line:
@@ -82,9 +82,9 @@ class Tahoe(object):
         proc = subprocess.Popen(
             args, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             universal_newlines=True, creationflags=0x08000000)
-        output = StringIO()
+        output = BytesIO()
         for line in iter(proc.stdout.readline, ''):
-            output.write(line)
+            output.write(line.encode('utf-8'))
             self.line_received(line.rstrip())
             if callback_trigger and callback_trigger in line.rstrip():
                 return
