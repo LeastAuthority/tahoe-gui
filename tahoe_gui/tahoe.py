@@ -6,7 +6,9 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser  # pylint: disable=import-error
+import errno
 import os
+import signal
 import sys
 from io import BytesIO
 
@@ -35,7 +37,7 @@ class CommandProtocol(ProcessProtocol):
         for line in data.strip().split('\n'):
             self.parent.line_received(line)
             if not self.done.called and self.trigger and self.trigger in line:
-                self.done.callback(None)
+                self.done.callback(self.transport.pid)
 
     def errReceived(self, data):
         self.outReceived(data)
@@ -55,6 +57,7 @@ class Tahoe(object):
         self.executable = executable
         if not self.nodedir:
             self.nodedir = os.path.join(os.path.expanduser('~'), '.tahoe')
+        self.pidfile = os.path.join(self.nodedir, "twistd.pid")
 
     def config_set(self, section, option, value):
         config = configparser.RawConfigParser(allow_no_value=True)
@@ -89,7 +92,7 @@ class Tahoe(object):
             output.write(line.encode('utf-8'))
             self.line_received(line.rstrip())
             if callback_trigger and callback_trigger in line.rstrip():
-                return
+                return proc.pid
         proc.poll()
         if proc.returncode:
             raise subprocess.CalledProcessError(proc.returncode, args)
@@ -117,9 +120,30 @@ class Tahoe(object):
     #    furl = os.path.join(self.nodedir, 'private', 'logport.furl')
     #    yield self.command(['debug', 'flogtool', 'tail', furl])
 
+    def stop(self):
+        if not os.path.isfile(self.pidfile):
+            print('No "twistd.pid" file found in {}'.format(self.nodedir))
+            return
+        with open(self.pidfile, 'r') as f:
+            pid = f.read()
+        pid = int(pid)
+        print("Trying to kill PID {}...".format(pid))
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError as err:
+            print(err)
+            if err.errno == errno.ESRCH or err.errno == errno.EINVAL:
+                os.remove(self.pidfile)
+            else:
+                raise
+
     @inlineCallbacks
     def start(self):
-        if os.path.isfile(os.path.join(self.nodedir, 'twistd.pid')):
-            yield self.command(['stop'])
-        yield self.command(['run'], 'client running')
+        if os.path.isfile(self.pidfile):
+            self.stop()
+        pid = yield self.command(['run'], 'client running')
+        pid = str(pid)
+        if sys.platform == 'win32' and pid.isdigit():
+            with open(self.pidfile, 'w') as f:
+                f.write(pid)
         #self.start_monitor()
