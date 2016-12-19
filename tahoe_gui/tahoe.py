@@ -53,6 +53,8 @@ class Tahoe(object):
     def __init__(self, nodedir=None, executable=None):
         self.nodedir = nodedir
         self.executable = executable
+        if not self.nodedir:
+            self.nodedir = os.path.join(os.path.expanduser('~'), '.tahoe')
 
     def config_set(self, section, option, value):
         config = configparser.RawConfigParser(allow_no_value=True)
@@ -97,7 +99,7 @@ class Tahoe(object):
     @inlineCallbacks
     def command(self, args, callback_trigger=None):
         exe = (self.executable if self.executable else which('tahoe')[0])
-        args = [exe] + (['-d', self.nodedir] if self.nodedir else []) + args
+        args = [exe] + ['-d', self.nodedir] + args
         env = os.environ
         env['PYTHONUNBUFFERED'] = '1'
         if sys.platform == 'win32' and getattr(sys, 'frozen', False):
