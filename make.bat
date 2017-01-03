@@ -59,6 +59,7 @@ call py -3.5 -m pip install --upgrade pip virtualenv
 call py -3.5 -m virtualenv --clear .\build\venv-gui
 call .\build\venv-gui\Scripts\activate
 call pip install pyqt5==5.6
+call pip install sip==4.18.1
 call pip install git+https://github.com/crwood/qt5reactor.git
 call pip install . 
 call pip install git+https://github.com/pyinstaller/pyinstaller.git
